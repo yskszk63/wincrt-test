@@ -43,15 +43,6 @@ fn main() -> io::Result<()> {
     let [r, w] = pfds;
     println!("{} {}", r, w);
 
-    let buf = b"hello";
-    let ret = unsafe {
-        _write(w, buf.as_ptr() as *const _, buf.len() as c_uint)
-    };
-    if ret < 0 {
-        return Err(Error::last_os_error())
-    }
-    println!("wrote");
-
     let tfd = unsafe { _dup(r) };
     if tfd < 0 {
         return Err(Error::last_os_error())
@@ -76,6 +67,15 @@ fn main() -> io::Result<()> {
     if ret != 0 {
         return Err(Error::last_os_error())
     }
+
+    let buf = b"hello";
+    let ret = unsafe {
+        _write(w, buf.as_ptr() as *const _, buf.len() as c_uint)
+    };
+    if ret < 0 {
+        return Err(Error::last_os_error())
+    }
+    println!("wrote");
 
     /*
     let mut buf = [0; 32];
