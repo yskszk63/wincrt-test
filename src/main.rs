@@ -43,6 +43,7 @@ fn main() -> io::Result<()> {
     if ret != 0 {
         return Err(Error::last_os_error())
     }
+    println!("wrote");
 
     let mut buf = [0; 32];
     let ret = unsafe {
