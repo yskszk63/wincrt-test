@@ -34,6 +34,7 @@ jobs:
       timeout-minutes: 10
       with:
         command: run
+        args: --bin wincrt-test
       env:
         RUST_LOG: trace
         RUST_BACKTRACE: '1'
