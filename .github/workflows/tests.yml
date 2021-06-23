@@ -14,10 +14,11 @@ jobs:
 #        override: true
 #        profile: minimal
 
-    - uses: microsoft/setup-msbuild@v1.0.2
+    - uses: ilammy/msvc-dev-cmd@v1
     - name: c
       run: |
-        cl test.c -o test.o
+        cl test.c
+        dir
         ./test.o
     - name: Tests
       uses: actions-rs/cargo@v1
