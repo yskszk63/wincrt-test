@@ -7,7 +7,7 @@ extern "C" {
 
 fn main() {
     let greet = OsStr::new("Hello, World!");
-    let greet = greet.encode_wide.collect::<Vec<_>>();
+    let greet = greet.encode_wide().collect::<Vec<_>>();
     unsafe {
         _putws(greet.as_ptr());
     }
