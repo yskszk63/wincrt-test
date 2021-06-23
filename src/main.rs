@@ -4,6 +4,16 @@ use std::ffi::c_void;
 use std::os::raw::{c_int, c_uint};
 //use std::os::windows::ffi::OsStrExt;
 use std::process::{Command, Stdio};
+use std::mem;
+use std::ptr;
+
+use bindings::Windows::Win32::System::Pipes::CreatePipe;
+use bindings::Windows::Win32::Security::SECURITY_ATTRIBUTES;
+use bindings::Windows::Win32::Foundation::{HANDLE, BOOL};
+
+mod bindings {
+    windows::include_bindings!();
+}
 
 //https://www.rpi.edu/dept/cis/software/g77-mingw32/include/fcntl.h
 const _O_BINARY: c_int = 0x8000;
@@ -24,7 +34,29 @@ extern "C" {
     fn _close(fd: c_int) -> c_int;
 }
 
-fn main() -> io::Result<()> {
+fn main() -> windows::Result<()> {
+    let mut read_handle = HANDLE::default();
+    let mut write_handle = HANDLE::default();
+    let mut sec = SECURITY_ATTRIBUTES {
+        nLength: mem::size_of::<SECURITY_ATTRIBUTES>() as u32,
+        lpSecurityDescriptor: ptr::null_mut(),
+        bInheritHandle: true.into(),
+    };
+    unsafe {
+        CreatePipe(
+            &mut read_handle as *mut _,
+            &mut write_handle as *mut _,
+            &mut sec as *mut _,
+            512,
+        )
+    }.ok()?;
+
+    println!("{:?} {:?}", read_handle, write_handle);
+
+    Ok(())
+}
+
+fn main2() -> io::Result<()> {
     /*
     let greet = OsStr::new("Hello, World!");
     let greet = greet.encode_wide().collect::<Vec<_>>();
