@@ -2,7 +2,7 @@ use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
 
 extern "C" {
-    fn _putws(str: *const [u16]);
+    fn _putws(str: *const u16);
 }
 
 fn main() {
