@@ -52,15 +52,15 @@ fn main() -> io::Result<()> {
     println!("wrote");
 
     let tfd = unsafe { _dup(r) };
-    if tfd != 0 {
+    if tfd < 0 {
         return Err(Error::last_os_error())
     }
     let ret = unsafe { _dup2(tfd, r) };
-    if ret != 0 {
+    if ret < 0 {
         return Err(Error::last_os_error())
     }
     let ret = unsafe { _close(tfd) };
-    if ret != 0 {
+    if ret < 0 {
         return Err(Error::last_os_error())
     }
 
