@@ -14,12 +14,12 @@ jobs:
 #        override: true
 #        profile: minimal
 
-    - uses: ilammy/msvc-dev-cmd@v1
-    - name: c
-      run: |
-        cl test.c
-        dir
-        ./test.exe
+#    - uses: ilammy/msvc-dev-cmd@v1
+#    - name: c
+#      run: |
+#        cl test.c
+#        dir
+#        ./test.exe
     - name: Tests
       uses: actions-rs/cargo@v1
       timeout-minutes: 10

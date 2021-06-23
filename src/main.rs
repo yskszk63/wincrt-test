@@ -4,7 +4,9 @@ use std::ffi::c_void;
 use std::os::raw::{c_int, c_uint};
 //use std::os::windows::ffi::OsStrExt;
 
-const O_BINARY: c_int = 0;
+const _O_BINARY: c_int = 0x8000;
+//const _O_TEXT: c_int = 0x4000;
+const O_NOINHERIT: c_int = 0x0080;
 
 extern "C" {
     //fn _putws(str: *const u16);
@@ -26,7 +28,7 @@ fn main() -> io::Result<()> {
 
     let mut pfds = [0, 0];
     let ret = unsafe {
-        _pipe(pfds.as_mut_ptr(), 512, O_BINARY)
+        _pipe(pfds.as_mut_ptr(), 512, _O_BINARY | O_NOINHERIT)
     };
     if ret != 0 {
         return Err(Error::last_os_error())
