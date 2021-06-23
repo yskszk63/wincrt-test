@@ -16,6 +16,11 @@ extern "C" {
     fn _write(fd: c_int, buffer: *const c_void, count: c_uint) -> c_int;
     // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/read?view=msvc-160
     fn _read(fd: c_int, buffer: *mut c_void, buffer_size: c_uint) -> c_int;
+    // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/dup-dup2?view=msvc-160
+    fn _dup(fd: c_int) -> c_int;
+    fn _dup2(fd1: c_int, fd2: c_int) -> c_int;
+    // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/close?view=msvc-160
+    fn _close(fd: c_int) -> c_int;
 }
 
 fn main() -> io::Result<()> {
@@ -46,12 +51,30 @@ fn main() -> io::Result<()> {
     }
     println!("wrote");
 
+    let tfd = unsafe { _dup(r) };
+    if tfd != 0 {
+        return Err(Error::last_os_error())
+    }
+    let ret = unsafe { _dup2(tfd, r) };
+    if ret != 0 {
+        return Err(Error::last_os_error())
+    }
+    let ret = unsafe { _close(tfd) };
+    if ret != 0 {
+        return Err(Error::last_os_error())
+    }
+
     let mut child = Command::new("./target/debug/child")
         .stdin(Stdio::null())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .spawn()
         .unwrap();
+
+    let ret = unsafe { _close(r) };
+    if ret != 0 {
+        return Err(Error::last_os_error())
+    }
 
     /*
     let mut buf = [0; 32];
