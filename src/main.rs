@@ -64,6 +64,7 @@ fn main() -> io::Result<()> {
     println!("{}", String::from_utf8_lossy(&buf[..ret as usize]));
     */
 
-    child.wait().unwrap();
+    let exitcode = child.wait().unwrap();
+    println!("{:?}", exitcode);
     Ok(())
 }

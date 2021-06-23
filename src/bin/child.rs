@@ -8,14 +8,23 @@ extern "C" {
 }
 
 fn main() -> io::Result<()> {
+    println!("Im child.");
+
     let mut buf = [0; 32];
-    let ret = unsafe {
-        _read(3, buf.as_mut_ptr() as *mut _, buf.len() as c_uint)
-    };
-    if ret < 0 {
-        return Err(Error::last_os_error())
+    let mut n = 0;
+    loop {
+        let ret = unsafe {
+            _read(3, buf.as_mut_ptr() as *mut _, buf.len() as c_uint)
+        };
+        if ret < 0 {
+            return Err(Error::last_os_error())
+        }
+        n += ret as usize;
+        if ret == 0 {
+            break
+        }
     }
-    println!("{}", String::from_utf8_lossy(&buf[..ret as usize]));
+    println!("{}", String::from_utf8_lossy(&buf[..n]));
 
     Ok(())
 }
