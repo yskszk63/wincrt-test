@@ -1,4 +1,4 @@
-use std::io::{self, Error};
+use std::io::Error;
 use std::ffi::c_void;
 use std::os::raw::{c_int, c_uint};
 
@@ -7,8 +7,9 @@ extern "C" {
     fn _read(fd: c_int, buffer: *mut c_void, buffer_size: c_uint) -> c_int;
 }
 
-fn main() -> io::Result<()> {
+fn main() {
     println!("Im child.");
+    eprintln!("Im child.");
 
     let mut buf = [0; 32];
     let mut n = 0;
@@ -17,7 +18,7 @@ fn main() -> io::Result<()> {
             _read(3, buf.as_mut_ptr() as *mut _, buf.len() as c_uint)
         };
         if ret < 0 {
-            return Err(Error::last_os_error())
+            panic!("{}", Error::last_os_error());
         }
         n += ret as usize;
         if ret == 0 {
@@ -25,6 +26,4 @@ fn main() -> io::Result<()> {
         }
     }
     println!("{}", String::from_utf8_lossy(&buf[..n]));
-
-    Ok(())
 }
