@@ -19,6 +19,7 @@ mod bindings {
 const _O_BINARY: c_int = 0x8000;
 //const _O_TEXT: c_int = 0x4000;
 const O_NOINHERIT: c_int = 0x0080;
+const _O_RDONLY: c_int = 0;
 
 extern "C" {
     //fn _putws(str: *const u16);
@@ -32,6 +33,8 @@ extern "C" {
     fn _dup2(fd1: c_int, fd2: c_int) -> c_int;
     // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/close?view=msvc-160
     fn _close(fd: c_int) -> c_int;
+    // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/open-osfhandle?view=msvc-160
+    fn _open_osfhandle(osfhandle: *const c_int, flags: c_int) -> c_int;
 }
 
 fn main() -> windows::Result<()> {
@@ -51,7 +54,15 @@ fn main() -> windows::Result<()> {
         )
     }.ok()?;
 
-    println!("{:?} {:?}", read_handle, write_handle);
+    let HANDLE(raw) = read_handle;
+    let fd = unsafe {
+        _open_osfhandle(&(raw as c_int) as *const _, _O_RDONLY)
+    };
+    if fd < 0 {
+        panic!("{}", io::Error::last_os_error())
+    }
+
+    println!("{:?} {:?} {}", read_handle, write_handle, fd);
 
     Ok(())
 }
