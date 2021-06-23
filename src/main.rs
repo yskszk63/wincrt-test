@@ -9,7 +9,7 @@ use std::ptr;
 
 use bindings::Windows::Win32::System::Pipes::CreatePipe;
 use bindings::Windows::Win32::Security::SECURITY_ATTRIBUTES;
-use bindings::Windows::Win32::Foundation::{HANDLE, BOOL};
+use bindings::Windows::Win32::Foundation::{HANDLE, BOOL, CloseHandle};
 
 mod bindings {
     windows::include_bindings!();
@@ -63,6 +63,22 @@ fn main() -> windows::Result<()> {
     }
 
     println!("{:?} {:?} {}", read_handle, write_handle, fd);
+
+    assert_eq!(3, fd); // FIXME
+
+    let mut child = Command::new("./target/debug/child")
+        .stdin(Stdio::null())
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .spawn()
+        .unwrap();
+
+    unsafe {
+        CloseHandle(write_handle)
+    }.ok()?;
+
+    let exitcode = child.wait().unwrap();
+    println!("{:?}", exitcode);
 
     Ok(())
 }
