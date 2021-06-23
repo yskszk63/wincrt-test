@@ -40,7 +40,7 @@ fn main() -> io::Result<()> {
     let ret = unsafe {
         _write(w, buf.as_ptr() as *const _, buf.len() as c_uint)
     };
-    if ret != 0 {
+    if ret < 0 {
         return Err(Error::last_os_error())
     }
     println!("wrote");
