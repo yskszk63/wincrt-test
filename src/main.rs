@@ -67,7 +67,7 @@ fn main() -> windows::Result<()> {
     assert_eq!(3, fd); // FIXME
 
     let mut child = Command::new("./target/debug/child")
-        .stdin(Stdio::null())
+        .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .spawn()
