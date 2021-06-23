@@ -18,8 +18,11 @@ fn main() {
         let ret = unsafe {
             _read(3, buf[n..].as_mut_ptr() as *mut _, buf.len() as c_uint)
         };
+        println!("{}", ret);
         if ret < 0 {
-            panic!("{}", Error::last_os_error());
+            let err = Error::last_os_error();
+            println!("{}", err);
+            panic!("{}", err);
         }
         n += ret as usize;
         if ret == 0 {
