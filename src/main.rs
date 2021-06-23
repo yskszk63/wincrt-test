@@ -3,6 +3,7 @@ use std::io::{self, Error};
 use std::ffi::c_void;
 use std::os::raw::{c_int, c_uint};
 //use std::os::windows::ffi::OsStrExt;
+use std::process::{Command, Stdio};
 
 const _O_BINARY: c_int = 0x8000;
 //const _O_TEXT: c_int = 0x4000;
@@ -45,6 +46,14 @@ fn main() -> io::Result<()> {
     }
     println!("wrote");
 
+    let mut child = Command::new("./target/debug/child")
+        .stdin(Stdio::null())
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .spawn()
+        .unwrap();
+
+    /*
     let mut buf = [0; 32];
     let ret = unsafe {
         _read(r, buf.as_mut_ptr() as *mut _, buf.len() as c_uint)
@@ -53,6 +62,8 @@ fn main() -> io::Result<()> {
         return Err(Error::last_os_error())
     }
     println!("{}", String::from_utf8_lossy(&buf[..ret as usize]));
+    */
 
+    child.wait().unwrap();
     Ok(())
 }

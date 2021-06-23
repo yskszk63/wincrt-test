@@ -20,6 +20,14 @@ jobs:
 #        cl test.c
 #        dir
 #        ./test.exe
+    - name: Build
+      uses: actions-rs/cargo@v1
+      timeout-minutes: 10
+      with:
+        command: build --bin child
+      env:
+        RUST_LOG: trace
+        RUST_BACKTRACE: '1'
     - name: Tests
       uses: actions-rs/cargo@v1
       timeout-minutes: 10
