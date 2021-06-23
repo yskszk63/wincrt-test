@@ -31,7 +31,7 @@ fn main() -> io::Result<()> {
     if ret != 0 {
         return Err(Error::last_os_error())
     }
-    let [w, r] = pfds;
+    let [r, w] = pfds;
     println!("{} {}", r, w);
 
     let buf = b"hello";

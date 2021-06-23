@@ -14,6 +14,10 @@ jobs:
 #        override: true
 #        profile: minimal
 
+    - name: c
+      run: |
+        cc test.c -o test.o
+        ./test.o
     - name: Tests
       uses: actions-rs/cargo@v1
       timeout-minutes: 10
