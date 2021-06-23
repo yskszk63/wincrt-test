@@ -34,7 +34,7 @@ extern "C" {
     // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/close?view=msvc-160
     fn _close(fd: c_int) -> c_int;
     // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/open-osfhandle?view=msvc-160
-    fn _open_osfhandle(osfhandle: *const c_int, flags: c_int) -> c_int;
+    fn _open_osfhandle(osfhandle: isize, flags: c_int) -> c_int;
 }
 
 fn main() -> windows::Result<()> {
@@ -56,7 +56,7 @@ fn main() -> windows::Result<()> {
 
     let HANDLE(raw) = read_handle;
     let fd = unsafe {
-        _open_osfhandle(&(raw as c_int) as *const _, _O_RDONLY)
+        _open_osfhandle(raw, _O_RDONLY)
     };
     if fd < 0 {
         panic!("{}", io::Error::last_os_error())
