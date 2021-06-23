@@ -5,6 +5,7 @@ use std::os::raw::{c_int, c_uint};
 //use std::os::windows::ffi::OsStrExt;
 use std::process::{Command, Stdio};
 
+//https://www.rpi.edu/dept/cis/software/g77-mingw32/include/fcntl.h
 const _O_BINARY: c_int = 0x8000;
 //const _O_TEXT: c_int = 0x4000;
 const O_NOINHERIT: c_int = 0x0080;

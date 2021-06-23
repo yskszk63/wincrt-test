@@ -14,8 +14,9 @@ fn main() {
     let mut buf = [0; 32];
     let mut n = 0;
     loop {
+        println!("loop");
         let ret = unsafe {
-            _read(3, buf.as_mut_ptr() as *mut _, buf.len() as c_uint)
+            _read(3, buf[n..].as_mut_ptr() as *mut _, buf.len() as c_uint)
         };
         if ret < 0 {
             panic!("{}", Error::last_os_error());
@@ -26,4 +27,6 @@ fn main() {
         }
     }
     println!("{}", String::from_utf8_lossy(&buf[..n]));
+
+    println!("Done.");
 }
