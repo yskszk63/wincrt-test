@@ -29,7 +29,7 @@ fn main() {
             break
         }
     }
-    println!("{}", String::from_utf8_lossy(&buf[..n]));
+    println!("'{}'", String::from_utf8_lossy(&buf[..n]));
 
     println!("Done.");
 }

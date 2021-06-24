@@ -1,19 +1,16 @@
-use std::io::{self, Error};
-//use std::ffi::OsStr;
-use std::ffi::CStr;
+use std::io;
 use std::ffi::c_void;
-use std::os::raw::{c_int, c_uint, c_char};
+use std::os::raw::{c_int, c_uint};
 use std::ffi::OsString;
 #[cfg(windows)]
 use std::os::windows::ffi::OsStrExt;
-//use std::process::{Command, Stdio};
-//use std::process::Command;
 use std::mem;
 use std::ptr;
 
 use bindings::Windows::Win32::System::Pipes::CreatePipe;
 use bindings::Windows::Win32::Security::SECURITY_ATTRIBUTES;
 use bindings::Windows::Win32::Foundation::{HANDLE, CloseHandle};
+use bindings::Windows::Win32::Storage::FileSystem::WriteFile;
 
 mod bindings {
     windows::include_bindings!();
@@ -26,7 +23,7 @@ mod bindings {
 //https://www.rpi.edu/dept/cis/software/g77-mingw32/include/fcntl.h
 const _O_BINARY: c_int = 0x8000;
 //const _O_TEXT: c_int = 0x4000;
-const O_NOINHERIT: c_int = 0x0080;
+//const O_NOINHERIT: c_int = 0x0080;
 const _O_RDONLY: c_int = 0;
 //https://www.rpi.edu/dept/cis/software/g77-mingw32/include/process.h
 const _P_NOWAIT: c_int = 1;
@@ -34,11 +31,11 @@ const _P_NOWAIT: c_int = 1;
 extern "C" {
     //fn _putws(str: *const u16);
     // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/pipe?view=msvc-160
-    fn _pipe(pfds: *mut c_int, psize: c_uint, textmode: c_int) -> c_int;
+    //fn _pipe(pfds: *mut c_int, psize: c_uint, textmode: c_int) -> c_int;
     // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/write?view=msvc-160
-    fn _write(fd: c_int, buffer: *const c_void, count: c_uint) -> c_int;
+    //fn _write(fd: c_int, buffer: *const c_void, count: c_uint) -> c_int;
     // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/read?view=msvc-160
-    fn _read(fd: c_int, buffer: *mut c_void, buffer_size: c_uint) -> c_int;
+    //fn _read(fd: c_int, buffer: *mut c_void, buffer_size: c_uint) -> c_int;
     // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/dup-dup2?view=msvc-160
     fn _dup(fd: c_int) -> c_int;
     fn _dup2(fd1: c_int, fd2: c_int) -> c_int;
@@ -47,7 +44,7 @@ extern "C" {
     // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/open-osfhandle?view=msvc-160
     fn _open_osfhandle(osfhandle: isize, flags: c_int) -> c_int;
     // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/spawnv-wspawnv?view=msvc-160
-    fn _spawnv(mode: c_int, cmdname: *const c_char, argv: *const *const c_char) -> isize;
+    //fn _spawnv(mode: c_int, cmdname: *const c_char, argv: *const *const c_char) -> isize;
     fn _wspawnv(mode: c_int, cmdname: *const u16, argv: *const *const u16) -> isize;
     // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/cwait?view=msvc-160
     fn _cwait(termstat: *mut c_int, prochandle: isize, action: c_int) -> isize;
@@ -55,6 +52,7 @@ extern "C" {
     fn _set_invalid_parameter_handler(newp: *const c_void) -> *const c_void;
 }
 
+#[allow(unused_variables)]
 pub extern "C" fn my_invalid_paratemer(expression: *const u16, function_name: *const u16, file_name: *const u16, line_number: c_uint, _: isize) {
     //panic!("_invalid_parameter")
 }
@@ -213,6 +211,11 @@ fn main() -> anyhow::Result<()> {
         Result::<_, anyhow::Error>::Ok(child)
     })?;
 
+    let greet = b"Hello, World!";
+    unsafe {
+        WriteFile(w, greet.as_ptr() as *mut _, greet.len() as u32, ptr::null_mut(), ptr::null_mut())
+    }.ok()?;
+
     unsafe {
         CloseHandle(w)
     }.ok()?;
@@ -221,156 +224,5 @@ fn main() -> anyhow::Result<()> {
     let exitcode = child.wait()?;
     println!("DONE {}", exitcode);
 
-    Ok(())
-}
-
-#[allow(unused)]
-fn main2() -> windows::Result<()> {
-    let mut read_handle = HANDLE::default();
-    let mut write_handle = HANDLE::default();
-    let mut sec = SECURITY_ATTRIBUTES {
-        nLength: mem::size_of::<SECURITY_ATTRIBUTES>() as u32,
-        lpSecurityDescriptor: ptr::null_mut(),
-        bInheritHandle: false.into(),
-    };
-    unsafe {
-        CreatePipe(
-            &mut read_handle as *mut _,
-            &mut write_handle as *mut _,
-            &mut sec as *mut _,
-            512,
-        )
-    }.ok()?;
-
-    let HANDLE(raw) = read_handle;
-    let fd = unsafe {
-        _open_osfhandle(raw, _O_RDONLY)
-    };
-    if fd < 0 {
-        panic!("{}", io::Error::last_os_error())
-    }
-
-    println!("{:?} {:?} {}", read_handle, write_handle, fd);
-
-    assert_eq!(3, fd); // FIXME
-
-    /*
-    let mut child = Command::new("./target/debug/child")
-        .stdin(Stdio::inherit())
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .spawn()
-        .unwrap();
-    */
-    let cmdname = CStr::from_bytes_with_nul(b"./target/debug/child\0").unwrap();
-    let args = [ cmdname.as_ptr(), ptr::null() ];
-    let child = unsafe {
-        _spawnv(_P_NOWAIT, cmdname.as_ptr(), args.as_ptr())
-    };
-    if child < 0 {
-        panic!("{}", io::Error::last_os_error())
-    }
-
-    unsafe {
-        CloseHandle(read_handle)
-    }.ok()?;
-
-    unsafe {
-        CloseHandle(write_handle)
-    }.ok()?;
-
-    let mut exitcode = c_int::default();
-    let ret = unsafe {
-        _cwait(&mut exitcode as *mut _, child, 0)
-    };
-    if ret < 0 {
-        panic!("{}", io::Error::last_os_error())
-    }
-    //let exitcode = child.wait().unwrap();
-    println!("{:?}", exitcode);
-
-    Ok(())
-}
-
-#[allow(unused)]
-fn main3() -> io::Result<()> {
-    /*
-    let greet = OsStr::new("Hello, World!");
-    let greet = greet.encode_wide().collect::<Vec<_>>();
-    unsafe {
-        _putws(greet.as_ptr());
-    }
-    */
-
-    let mut pfds = [0, 0];
-    let ret = unsafe {
-        _pipe(pfds.as_mut_ptr(), 512, _O_BINARY | O_NOINHERIT)
-    };
-    if ret != 0 {
-        return Err(Error::last_os_error())
-    }
-    let [r, w] = pfds;
-    println!("{} {}", r, w);
-
-    let tfd = unsafe { _dup(r) };
-    if tfd < 0 {
-        return Err(Error::last_os_error())
-    }
-    let ret = unsafe { _dup2(tfd, r) };
-    if ret < 0 {
-        return Err(Error::last_os_error())
-    }
-    let ret = unsafe { _close(tfd) };
-    if ret < 0 {
-        return Err(Error::last_os_error())
-    }
-
-    let cmdname = CStr::from_bytes_with_nul(b"./target/debug/child\0").unwrap();
-    let args = [ cmdname.as_ptr(), ptr::null() ];
-    let child = unsafe {
-        _spawnv(_P_NOWAIT, cmdname.as_ptr(), args.as_ptr())
-    };
-    if child < 0 {
-        panic!("{}", io::Error::last_os_error())
-    }
-
-    let ret = unsafe { _close(r) };
-    if ret != 0 {
-        return Err(Error::last_os_error())
-    }
-
-    let buf = b"hello";
-    let ret = unsafe {
-        _write(w, buf.as_ptr() as *const _, buf.len() as c_uint)
-    };
-    if ret < 0 {
-        return Err(Error::last_os_error())
-    }
-    println!("wrote");
-
-    let ret = unsafe { _close(w) };
-    if ret != 0 {
-        return Err(Error::last_os_error())
-    }
-
-    /*
-    let mut buf = [0; 32];
-    let ret = unsafe {
-        _read(r, buf.as_mut_ptr() as *mut _, buf.len() as c_uint)
-    };
-    if ret < 0 {
-        return Err(Error::last_os_error())
-    }
-    println!("{}", String::from_utf8_lossy(&buf[..ret as usize]));
-    */
-
-    let mut exitcode = c_int::default();
-    let ret = unsafe {
-        _cwait(&mut exitcode as *mut _, child, 0)
-    };
-    if ret < 0 {
-        panic!("{}", io::Error::last_os_error())
-    }
-    println!("{:?}", exitcode);
     Ok(())
 }

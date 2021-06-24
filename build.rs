@@ -5,5 +5,6 @@ fn main() {
         Windows::Win32::Foundation::HANDLE,
         Windows::Win32::Foundation::BOOL,
         Windows::Win32::Foundation::CloseHandle,
+        Windows::Win32::Storage::FileSystem::WriteFile,
     };
 }
