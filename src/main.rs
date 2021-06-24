@@ -129,11 +129,12 @@ fn into_fd(handle: HANDLE) -> anyhow::Result<FileDescriptor> {
 
 fn swap_fd_with<E, R, F>(fd: FileDescriptor, no: c_int, fun: F) -> Result<R, E>
 where F: FnOnce(FileDescriptor) -> Result<R, E>, E: From<io::Error> {
+    let dup = fd.dup()?;
+
     // FIXME NOINHERIT?
     // dup no & close no
     let backup = unsafe { FileDescriptor::from(no) }.dup();
 
-    let dup = fd.dup()?;
     let newfd = dup.dup2(no)?;
     drop(dup);
 
