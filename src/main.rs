@@ -56,7 +56,7 @@ extern "C" {
 }
 
 pub extern "C" fn my_invalid_paratemer(expression: *const u16, function_name: *const u16, file_name: *const u16, line_number: c_uint, _: isize) {
-    panic!("_invalid_parameter")
+    //panic!("_invalid_parameter")
 }
 
 #[derive(Debug)]
