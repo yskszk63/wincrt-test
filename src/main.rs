@@ -45,7 +45,7 @@ extern "C" {
     fn _cwait(termstat: *mut c_int, prochandle: isize, action: c_int) -> isize;
 }
 
-fn main() -> windows::Result<()> {
+fn main2() -> windows::Result<()> {
     let mut read_handle = HANDLE::default();
     let mut write_handle = HANDLE::default();
     let mut sec = SECURITY_ATTRIBUTES {
@@ -108,7 +108,7 @@ fn main() -> windows::Result<()> {
     Ok(())
 }
 
-fn main2() -> io::Result<()> {
+fn main() -> io::Result<()> {
     /*
     let greet = OsStr::new("Hello, World!");
     let greet = greet.encode_wide().collect::<Vec<_>>();
@@ -140,12 +140,14 @@ fn main2() -> io::Result<()> {
         return Err(Error::last_os_error())
     }
 
-    let mut child = Command::new("./target/debug/child")
-        .stdin(Stdio::null())
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .spawn()
-        .unwrap();
+    let cmdname = CStr::from_bytes_with_nul(b"./target/debug/child\0").unwrap();
+    let args = [ cmdname.as_ptr(), ptr::null() ];
+    let child = unsafe {
+        _spawnv(_P_NOWAIT, cmdname.as_ptr(), args.as_ptr())
+    };
+    if child < 0 {
+        panic!("{}", io::Error::last_os_error())
+    }
 
     let ret = unsafe { _close(r) };
     if ret != 0 {
@@ -172,7 +174,13 @@ fn main2() -> io::Result<()> {
     println!("{}", String::from_utf8_lossy(&buf[..ret as usize]));
     */
 
-    let exitcode = child.wait().unwrap();
+    let mut exitcode = c_int::default();
+    let ret = unsafe {
+        _cwait(&mut exitcode as *mut _, child, 0)
+    };
+    if ret < 0 {
+        panic!("{}", io::Error::last_os_error())
+    }
     println!("{:?}", exitcode);
     Ok(())
 }
