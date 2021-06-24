@@ -1,7 +1,8 @@
 use std::io::{self, Error};
 //use std::ffi::OsStr;
+use std::ffi::CStr;
 use std::ffi::c_void;
-use std::os::raw::{c_int, c_uint};
+use std::os::raw::{c_int, c_uint, c_char};
 //use std::os::windows::ffi::OsStrExt;
 use std::process::{Command, Stdio};
 use std::mem;
@@ -20,9 +21,12 @@ const _O_BINARY: c_int = 0x8000;
 //const _O_TEXT: c_int = 0x4000;
 const O_NOINHERIT: c_int = 0x0080;
 const _O_RDONLY: c_int = 0;
+//https://www.rpi.edu/dept/cis/software/g77-mingw32/include/process.h
+const _P_NOWAIT: c_int = 1;
 
 extern "C" {
     //fn _putws(str: *const u16);
+    // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/pipe?view=msvc-160
     fn _pipe(pfds: *mut c_int, psize: c_uint, textmode: c_int) -> c_int;
     // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/write?view=msvc-160
     fn _write(fd: c_int, buffer: *const c_void, count: c_uint) -> c_int;
@@ -35,6 +39,10 @@ extern "C" {
     fn _close(fd: c_int) -> c_int;
     // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/open-osfhandle?view=msvc-160
     fn _open_osfhandle(osfhandle: isize, flags: c_int) -> c_int;
+    // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/spawnv-wspawnv?view=msvc-160
+    fn _spawnv(mode: c_int, cmdname: *const c_char, argv: *const *const c_char) -> isize;
+    // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/cwait?view=msvc-160
+    fn _cwait(termstat: *mut c_int, prochandle: isize, action: c_int) -> isize;
 }
 
 fn main() -> windows::Result<()> {
@@ -66,18 +74,35 @@ fn main() -> windows::Result<()> {
 
     assert_eq!(3, fd); // FIXME
 
+    /*
     let mut child = Command::new("./target/debug/child")
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .spawn()
         .unwrap();
+    */
+    let cmdname = CStr::from_bytes_with_nul(b"./target/debug/child\0").unwrap();
+    let args = [ cmdname.as_ptr(), ptr::null() ];
+    let child = unsafe {
+        _spawnv(_P_NOWAIT, cmdname.as_ptr(), args.as_ptr())
+    };
+    if child < 0 {
+        panic!("{}", io::Error::last_os_error())
+    }
 
     unsafe {
         CloseHandle(write_handle)
     }.ok()?;
 
-    let exitcode = child.wait().unwrap();
+    let mut exitcode = c_int::default();
+    let ret = unsafe {
+        _cwait(&mut exitcode as *mut _, child, 0)
+    };
+    if ret < 0 {
+        panic!("{}", io::Error::last_os_error())
+    }
+    //let exitcode = child.wait().unwrap();
     println!("{:?}", exitcode);
 
     Ok(())
