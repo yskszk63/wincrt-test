@@ -167,7 +167,7 @@ fn crt_spawn<C>(program: C) -> io::Result<CrtChild> where C: Into<OsString> {
     let mut program: Vec<u16> = {
         #[cfg(windows)]
         {
-            program::encode_wide().collect()
+            program.encode_wide().collect()
         }
 
         #[cfg(not(windows))]
