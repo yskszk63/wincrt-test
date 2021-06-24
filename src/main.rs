@@ -163,6 +163,11 @@ fn main() -> io::Result<()> {
     }
     println!("wrote");
 
+    let ret = unsafe { _close(w) };
+    if ret != 0 {
+        return Err(Error::last_os_error())
+    }
+
     /*
     let mut buf = [0; 32];
     let ret = unsafe {
