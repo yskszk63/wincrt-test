@@ -51,30 +51,12 @@ extern "C" {
     fn _wspawnv(mode: c_int, cmdname: *const u16, argv: *const *const u16) -> isize;
     // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/cwait?view=msvc-160
     fn _cwait(termstat: *mut c_int, prochandle: isize, action: c_int) -> isize;
+    // https://docs.microsoft.com/ja-jp/cpp/c-runtime-library/reference/set-invalid-parameter-handler-set-thread-local-invalid-parameter-handler?view=msvc-160
+    fn _set_invalid_parameter_handler(newp: *const c_void) -> *const c_void;
 }
 
-#[no_mangle]
-#[allow(unused_variables)]
-pub extern "C" fn _invalid_parameter(expression: *const u16, function_name: *const u16, file_name: *const u16, line_number: c_uint, _: isize) {
-    eprintln!("_invalid_parameter")
-}
-
-#[no_mangle]
-#[allow(unused_variables)]
-pub extern "C" fn _invalid_parameter_noinfo() {
-    eprintln!("_invalid_parameter_noinfo")
-}
-
-#[no_mangle]
-#[allow(unused_variables)]
-pub extern "C" fn _invalid_parameter_noinfo_noreturn() {
-    eprintln!("_invalid_parameter_noinfo_noreturn")
-}
-
-#[no_mangle]
-#[allow(unused_variables)]
-pub extern "C" fn _invoke_watson(expression: *const u16, function_name: *const u16, file_name: *const u16, line_number: c_uint, _: isize) {
-    eprintln!("_invoke_watson")
+pub extern "C" fn my_invalid_paratemer(expression: *const u16, function_name: *const u16, file_name: *const u16, line_number: c_uint, _: isize) {
+    panic!("_invalid_parameter")
 }
 
 #[derive(Debug)]
@@ -214,6 +196,10 @@ fn crt_spawn<C>(program: C) -> io::Result<CrtChild> where C: Into<OsString> {
 }
 
 fn main() -> anyhow::Result<()> {
+    unsafe {
+        _set_invalid_parameter_handler(my_invalid_paratemer as *const _);
+    }
+
     let (r, w) = create_pipe()?;
     println!("pipe created.");
     let r = into_fd(r)?;
