@@ -53,6 +53,30 @@ extern "C" {
     fn _cwait(termstat: *mut c_int, prochandle: isize, action: c_int) -> isize;
 }
 
+#[no_mangle]
+#[allow(unused_variables)]
+pub extern "C" fn _invalid_parameter(expression: *const u16, function_name: *const u16, file_name: *const u16, line_number: c_uint, _: isize) {
+    eprintln!("_invalid_parameter")
+}
+
+#[no_mangle]
+#[allow(unused_variables)]
+pub extern "C" fn _invalid_parameter_noinfo() {
+    eprintln!("_invalid_parameter_noinfo")
+}
+
+#[no_mangle]
+#[allow(unused_variables)]
+pub extern "C" fn _invalid_parameter_noinfo_noreturn() {
+    eprintln!("_invalid_parameter_noinfo_noreturn")
+}
+
+#[no_mangle]
+#[allow(unused_variables)]
+pub extern "C" fn _invoke_watson(expression: *const u16, function_name: *const u16, file_name: *const u16, line_number: c_uint, _: isize) {
+    eprintln!("_invoke_watson")
+}
+
 #[derive(Debug)]
 struct FileDescriptor(c_int);
 
