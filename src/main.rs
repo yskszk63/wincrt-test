@@ -155,7 +155,7 @@ impl CrtChild {
             _cwait(&mut exitcode as *mut _, self.0, 0)
         };
         if ret < 0 {
-            panic!("{}", io::Error::last_os_error())
+            return Err(io::Error::last_os_error())
         }
 
         Ok(exitcode)
@@ -182,7 +182,7 @@ fn crt_spawn<C>(program: C) -> io::Result<CrtChild> where C: Into<OsString> {
         _wspawnv(_P_NOWAIT, program.as_ptr(), args.as_ptr())
     };
     if child < 0 {
-        panic!("{}", io::Error::last_os_error())
+        return Err(io::Error::last_os_error())
     }
 
     Ok(CrtChild(child))
@@ -190,9 +190,13 @@ fn crt_spawn<C>(program: C) -> io::Result<CrtChild> where C: Into<OsString> {
 
 fn main() -> anyhow::Result<()> {
     let (r, w) = create_pipe()?;
+    println!("pipe created.");
     let r = into_fd(r)?;
+    println!("convert handle into fd.");
     let mut child = swap_fd_with(r, 3, move |fd| {
+        println!("swap ok.");
         let child = crt_spawn("./target/debug/child")?;
+        println!("spawned");
         drop(fd);
 
         Result::<_, anyhow::Error>::Ok(child)
@@ -201,6 +205,7 @@ fn main() -> anyhow::Result<()> {
     unsafe {
         CloseHandle(w)
     }.ok()?;
+    println!("closed");
 
     let exitcode = child.wait()?;
     println!("DONE {}", exitcode);
